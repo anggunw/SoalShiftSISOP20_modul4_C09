@@ -29,7 +29,7 @@ void logFile(char* command, char* desc){
     time(&rawtime);
     info = localtime(&rawtime);
     strftime(now, sizeof(now), "%y%m%d-%H:%M:%S::", info);
-    if(strcmp(command, "rmdir") == 0 || strcmp(command, "unlink") == 0){
+    if(strcmp(command, "RMDIR") == 0 || strcmp(command, "UNLINK") == 0){
         strcpy(level, "WARNING");
     }
     else{
