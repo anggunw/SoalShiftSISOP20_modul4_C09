@@ -238,10 +238,6 @@ static int xmp_write(const char *path, const char *buf, size_t size,
 		res = -errno;
 
 	close(fd);
-
-    char temp[10] = "WRITE";
-    logFile(temp, fpath);  
-
 	return res;
 }
 
