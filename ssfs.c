@@ -8,12 +8,16 @@
 #include <errno.h>
 #include <sys/time.h>
 
-  
-static  const  char *dirpath = "/home/gun/Documents";
+
+static  const  char *dirpath = "/home/farrelmt/Documents";
 char desc[100], command[100];
 char fpath[100], fpath2[100];
+char ckey[] = "9(ku@AW1[Lmvgax6q`5Y2Ry?+sF!^HKQiBXCUSe&0M.b%rI'7d)o4~VfZ*{#:}ETt$3J-zpc]lnh8,GwP_ND|jO";
+int key = 10;
+int act = 0;
 
-void findPath(char* fpath, const char* path){
+void findPath(char* fpath, const char* path)
+{
     if(strcmp(path,"/") == 0){
         path=dirpath;
         sprintf(fpath,"%s",path);
@@ -21,7 +25,8 @@ void findPath(char* fpath, const char* path){
     else sprintf(fpath, "%s%s",dirpath,path);
 }
 
-void logFile(char* command, char* desc){
+void logFile(char* command, char* desc)
+{
     char now[100];
     char level[30];
     time_t rawtime;
@@ -39,12 +44,65 @@ void logFile(char* command, char* desc){
     sprintf(logLine, "%s::%s%s::%s", level, now, command, desc);
 
     FILE* fp;
-    fp = fopen("/home/gun/fs.log", "a");
+    fp = fopen("/home/farrelmt/fs.log", "a");
     fprintf(fp, "%s\n", logLine);
     fclose(fp);
 }
 
-static  int  xmp_getattr(const char *path, struct stat *stbuf){
+void encrypt(char *fpath) //blm selesai
+{
+  char *nencv1;
+  nencv1 = strstr(fpath, "encv1_");
+  nencv1 = strstr(nencv1, "/");
+  const char strr = '.';
+  char *buff;
+  buff = strrchr(nencv1, strr);
+  int lenenc, lenbuff, lencon;
+  lenenc = strlen(nencv1);
+  lenbuff = strlen(buff);
+  lencon = lenenc - lenbuff;
+
+  for(int i = 0; i < lencon; i++)
+  {
+    for(int j = 0; j < strlen(ckey); j++)
+    {
+        if(nencv1[i] == ckey[j])
+        {
+          int plus = j + key;
+          plus = plus % strlen(ckey);
+          nencv1[i] = ckey[plus];
+          break;
+        }
+    }
+  }
+
+  act = 0;
+}
+
+void checkdirname(const char *fpath)
+{
+  //get parent directory
+  //findPath(fpath, path);
+  char *nencv1, *nencv3;
+  nencv1 = strstr(fpath, "encv1_");
+  nencv3 = strstr(fpath, "sync_");
+
+  //encrypt
+  if(nencv1)
+    act = 1;
+
+  //sync_
+  else if(nencv3)
+    act = 3;
+
+  else
+    act = 0;
+
+
+}
+
+static  int  xmp_getattr(const char *path, struct stat *stbuf)
+{
     int res;
     char fpath[1000];
     sprintf(fpath,"%s%s",dirpath,path);
@@ -55,9 +113,11 @@ static  int  xmp_getattr(const char *path, struct stat *stbuf){
     return 0;
 }
 
-static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,off_t offset, struct fuse_file_info *fi)
+static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+  off_t offset, struct fuse_file_info *fi)
 {
     findPath(fpath, path);
+
     int res = 0;
     DIR *dp;
     struct dirent *de;
@@ -69,6 +129,7 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,off_t
 
     while ((de = readdir(dp)) != NULL) {
         struct stat st;
+        checkdirname(fpath);
         memset(&st, 0, sizeof(st));
         st.st_ino = de->d_ino;
         st.st_mode = de->d_type << 12;
@@ -80,14 +141,14 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,off_t
     return 0;
 }
 
-
-static int xmp_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
+  struct fuse_file_info *fi)
 {
     findPath(fpath, path);
-    
+
     int res = 0;
     int fd = 0 ;
-    
+
     (void) fi;
 
     fd = open(fpath, O_RDONLY);
@@ -101,7 +162,6 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset, stru
     close(fd);
     return res;
 }
-
 
 static int xmp_access(const char *path, int mask)
 {
@@ -117,7 +177,7 @@ static int xmp_access(const char *path, int mask)
 
 static int xmp_mkdir(const char *path, mode_t mode)
 {
-	findPath(fpath, path); 
+	findPath(fpath, path);
 
 	int res;
 
@@ -125,13 +185,13 @@ static int xmp_mkdir(const char *path, mode_t mode)
 	if (res == -1) return -errno;
 
     char temp[10] = "MKDIR";
-    logFile(temp, fpath);  
+    logFile(temp, fpath);
 	return 0;
 }
 
 static int xmp_unlink(const char *path)
 {
-    findPath(fpath, path); 
+    findPath(fpath, path);
 
 	int res;
 	res = unlink(fpath);
@@ -139,7 +199,7 @@ static int xmp_unlink(const char *path)
 		return -errno;
 
     char temp[10] = "UNLINK";
-    logFile(temp, fpath); 
+    logFile(temp, fpath);
 	return 0;
 }
 
@@ -153,7 +213,7 @@ static int xmp_rmdir(const char *path)
 	if (res == -1) return -errno;
 
     char temp[10] = "RMDIR";
-    logFile(temp, fpath);  
+    logFile(temp, fpath);
 	return 0;
 }
 
@@ -171,7 +231,7 @@ static int xmp_rename(const char *from, const char *to)
     char temp[10] = "RENAME";
     strcat(fpath, "::");
     strcat(fpath, fpath2);
-    logFile(temp, fpath);  
+    logFile(temp, fpath);
 	return 0;
 }
 
@@ -195,7 +255,7 @@ static int xmp_utimens(const char *path, const struct timespec ts[2])
 
 static int xmp_truncate(const char *path, off_t size)
 {
-    findPath(fpath, path);
+  findPath(fpath, path);
 
 	int res;
 
@@ -241,7 +301,6 @@ static int xmp_write(const char *path, const char *buf, size_t size,
 	return res;
 }
 
-
 static int xmp_statfs(const char *path, struct statvfs *stbuf)
 {
     findPath(fpath, path);
@@ -254,7 +313,8 @@ static int xmp_statfs(const char *path, struct statvfs *stbuf)
 	return 0;
 }
 
-static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) {
+static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi)
+{
 
     findPath(fpath, path);
 
@@ -268,16 +328,17 @@ static int xmp_create(const char* path, mode_t mode, struct fuse_file_info* fi) 
     close(res);
 
     char temp[10] = "CREAT";
-    logFile(temp, fpath);  
+    logFile(temp, fpath);
 
     return 0;
 }
 
-static struct fuse_operations xmp_oper = {
-    .getattr = xmp_getattr,
-    .readdir = xmp_readdir,
-    .read = xmp_read,
-    
+static struct fuse_operations xmp_oper =
+{
+  .getattr = xmp_getattr,
+  .readdir = xmp_readdir,
+  .read = xmp_read,
+
 	.access = xmp_access,
 	//.readlink	= xmp_readlink,
 	//.mknod = xmp_mknod,
@@ -299,14 +360,8 @@ static struct fuse_operations xmp_oper = {
 	//.fsync = xmp_fsync,
 };
 
-  
-
 int  main(int  argc, char *argv[])
-
 {
-
-umask(0);
-
-return fuse_main(argc, argv, &xmp_oper, NULL);
-
+  umask(0);
+  return fuse_main(argc, argv, &xmp_oper, NULL);
 }
