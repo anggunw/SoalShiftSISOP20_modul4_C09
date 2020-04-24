@@ -12,94 +12,16 @@
 static  const  char *dirpath = "/home/farrelmt/Documents";
 char desc[100], command[100];
 char fpath[100], fpath2[100];
-char ckey[] = "9(ku@AW1[Lmvgax6q`5Y2Ry?+sF!^HKQiBXCUSe&0M.b%rI'7d)o4~VfZ*{#:}ETt$3J-zpc]lnh8,GwP_ND|jO";
 int key = 10;
 int act = 0;
 
-void findPath(char* fpath, const char* path)
-{
-    if(strcmp(path,"/") == 0){
-        path=dirpath;
-        sprintf(fpath,"%s",path);
-    }
-    else sprintf(fpath, "%s%s",dirpath,path);
-}
-
-void logFile(char* command, char* desc)
-{
-    char now[100];
-    char level[30];
-    time_t rawtime;
-    struct tm *info;
-    time(&rawtime);
-    info = localtime(&rawtime);
-    strftime(now, sizeof(now), "%y%m%d-%H:%M:%S::", info);
-    if(strcmp(command, "RMDIR") == 0 || strcmp(command, "UNLINK") == 0){
-        strcpy(level, "WARNING");
-    }
-    else{
-        strcpy(level, "INFO");
-    }
-    char logLine[200];
-    sprintf(logLine, "%s::%s%s::%s", level, now, command, desc);
-
-    FILE* fp;
-    fp = fopen("/home/farrelmt/fs.log", "a");
-    fprintf(fp, "%s\n", logLine);
-    fclose(fp);
-}
-
-void encrypt(char *fpath) //blm selesai
-{
-  char *nencv1;
-  nencv1 = strstr(fpath, "encv1_");
-  nencv1 = strstr(nencv1, "/");
-  const char strr = '.';
-  char *buff;
-  buff = strrchr(nencv1, strr);
-  int lenenc, lenbuff, lencon;
-  lenenc = strlen(nencv1);
-  lenbuff = strlen(buff);
-  lencon = lenenc - lenbuff;
-
-  for(int i = 0; i < lencon; i++)
-  {
-    for(int j = 0; j < strlen(ckey); j++)
-    {
-        if(nencv1[i] == ckey[j])
-        {
-          int plus = j + key;
-          plus = plus % strlen(ckey);
-          nencv1[i] = ckey[plus];
-          break;
-        }
-    }
-  }
-
-  act = 0;
-}
-
-void checkdirname(const char *fpath)
-{
-  //get parent directory
-  //findPath(fpath, path);
-  char *nencv1, *nencv3;
-  nencv1 = strstr(fpath, "encv1_");
-  nencv3 = strstr(fpath, "sync_");
-
-  //encrypt
-  if(nencv1)
-    act = 1;
-
-  //sync_
-  else if(nencv3)
-    act = 3;
-
-  else
-    act = 0;
-
-
-}
+void findPath(char* fpath, const char* path);
+void logFile(char* command, char* desc);
+void encrypt(char *fpath);
+void decrypt(char *fpath);
+void syncdir(char *fpath, char *fpath2, int modtime);
+void dblog(char *fpath);
+void checkdirname(const char *fpath);
 
 static  int  xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -364,4 +286,144 @@ int  main(int  argc, char *argv[])
 {
   umask(0);
   return fuse_main(argc, argv, &xmp_oper, NULL);
+}
+
+void findPath(char* fpath, const char* path)
+{
+    if(strcmp(path,"/") == 0){
+        path=dirpath;
+        sprintf(fpath,"%s",path);
+    }
+    else sprintf(fpath, "%s%s",dirpath,path);
+}
+
+void logFile(char* command, char* desc)
+{
+    char now[100];
+    char level[30];
+    time_t rawtime;
+    struct tm *info;
+    time(&rawtime);
+    info = localtime(&rawtime);
+    strftime(now, sizeof(now), "%y%m%d-%H:%M:%S::", info);
+    if(strcmp(command, "RMDIR") == 0 || strcmp(command, "UNLINK") == 0){
+        strcpy(level, "WARNING");
+    }
+    else{
+        strcpy(level, "INFO");
+    }
+    char logLine[200];
+    sprintf(logLine, "%s::%s%s::%s", level, now, command, desc);
+
+    FILE* fp;
+    fp = fopen("/home/farrelmt/fs.log", "a");
+    fprintf(fp, "%s\n", logLine);
+    fclose(fp);
+}
+
+void encrypt(char *fpath) //encrypt blm selesai
+{
+  char ckey[] = "9(ku@AW1[Lmvgax6q`5Y2Ry?+sF!^HKQiBXCUSe&0M.b%rI'7d)o4~VfZ*{#:}ETt$3J-zpc]lnh8,GwP_ND|jO";
+  char *nencv1;
+  nencv1 = strstr(fpath, "encv1_");
+  nencv1 = strstr(nencv1, "/");
+  const char strr = '.';
+  char *buff;
+  buff = strrchr(nencv1, strr);
+  int lenenc, lenbuff, lencon;
+  lenenc = strlen(nencv1);
+  lenbuff = strlen(buff);
+  lencon = lenenc - lenbuff;
+
+  for(int i = 0; i < lencon; i++)
+  {
+    for(int j = 0; j < strlen(ckey); j++)
+    {
+        if((nencv1[i] == ckey[j]) && nencv[i] != '/')
+        {
+          int plus = j + key;
+          plus = plus % strlen(ckey);
+          nencv1[i] = ckey[plus];
+          break;
+        }
+    }
+  }
+
+  act = 0;
+}
+
+void decrypt(char *fpath) //decrypt blm selesai
+{
+  char ckey[] = "Oj|DN_PwG,8hnl]cpz-J3$tTE}:#{*ZfV~4o)d7'Ir%b.M0&eSUCXBiQKH^!Fs+?yR2Y5`q6xagvmL[1WA@uk(9";
+  char *nencv1;
+  nencv1 = strstr(fpath, "encv1_");
+  nencv1 = strstr(nencv1, "/");
+  const char strr = '.';
+  char *buff;
+  buff = strrchr(nencv1, strr);
+  int lenenc, lenbuff, lencon;
+  lenenc = strlen(nencv1);
+  lenbuff = strlen(buff);
+  lencon = lenenc - lenbuff;
+
+  for(int i = 0; i < lencon; i++)
+  {
+    for(int j = 0; j < strlen(ckey); j++)
+    {
+        if((nencv1[i] == ckey[j]) && nencv[i] != '/')
+        {
+          int plus = j + key;
+          plus = plus % strlen(ckey);
+          nencv1[i] = ckey[plus];
+          break;
+        }
+    }
+  }
+
+  act = -1;
+}
+
+void dblog(char *fpath) //database log kosong
+{
+  //setiap mkdir rename tercatat ke database/log berupa file
+}
+
+void checkdirname(const char *fpath)
+{
+  //get parent directory
+  //findPath(fpath, path);
+  char *nencv1, *nencv3;
+  nencv1 = strstr(fpath, "encv1_");
+  nencv3 = strstr(fpath, "sync_");
+
+  //encrypt
+  if(nencv1)
+    act = 1;
+
+  //sync_
+  else if(nencv3)
+    act = 3;
+
+  else
+    act = 0;
+
+
+}
+
+void syncdir(char *fpath, char *fpath2, float modtime)
+{
+  //cel dir & file
+  if(strcmp(fpath, fpath2) == 0)
+  {
+    //get modified time
+    if(modtime < 0.1 && modtime > -0.1)
+    {
+      //sync
+    }
+  }
+
+  else
+  {
+      //never sync again if above is violated
+  }
 }
