@@ -22,6 +22,9 @@ void decrypt(char *fpath);
 void syncdir(char *fpath, char *fpath2, int modtime);
 void dblog(char *fpath);
 void checkdirname(const char *fpath);
+void enc2(char* fileName);
+void dec2(char* fileName);
+void removeSubstr (char *string, char *sub)
 
 static  int  xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -426,4 +429,91 @@ void syncdir(char *fpath, char *fpath2, float modtime)
   {
       //never sync again if above is violated
   }
+}
+
+void enc2(char* fileName){
+    int len = strlen(fileName);
+    char *checkFolder;
+    checkFolder = &fileName[len - 1];
+    if(strcmp(fileName,".") == 0 || strcmp(fileName, "..") == 0 || 
+        strstr(fileName, ".0") != NULL ||
+        strstr(fileName, ".1") != NULL ||
+        strstr(fileName, ".2") != NULL ||
+        strstr(fileName, ".3") != NULL ||
+        strstr(fileName, ".4") != NULL ||
+        strstr(fileName, ".5") != NULL ||
+        strstr(fileName, ".6") != NULL ||
+        strstr(fileName, ".7") != NULL ||
+        strstr(fileName, ".8") != NULL ||
+        strstr(fileName, ".9") != NULL ||
+        strcmp(checkFolder, "/") == 0
+    ) return;
+
+    int part=0, i, accum;
+    FILE *fp1, *fp2;
+    long sizeFile = file_size(fileName);
+    part = sizeFile/SEGMENT + 1;
+    char partName[200];
+    char line[1080];
+
+    fp1 = fopen(fileName, "r");
+    if(fp1){
+        for(i=0;i<part;i++){
+            accum = 0;
+            sprintf(partName, "%s.%03d", fileName, i);
+            fp2 = fopen(partName, "w");
+            if(fp2){
+                while(fgets(line, 1080, fp1) && accum <= SEGMENT){
+                    accum += strlen(line);
+                    fputs(line, fp2);
+                }
+                fclose(fp2);
+            }
+        }
+        fclose(fp1);
+    }
+    remove(fileName);
+}
+
+void removeSubstr (char *string, char *sub) {
+    char *match = string;
+    int len = strlen(sub);
+    while ((match = strstr(match, sub))) {
+        *match = '\0';
+        strcat(string, match+len);
+                match++;
+    }
+}
+
+void dec2(char* firstPart){
+    int i, accum;
+    FILE *fp1, *fp2;
+    //long sizeFile = file_size(fileName);
+    //part = sizeFile/SEGMENT + 1;
+    removeSubstr(firstPart, ".000");
+
+    char partName[200];
+    char line[1080];
+
+    fp1 = fopen(firstPart, "a+");
+    if(fp1){
+        for(i=1;i<200;i++){
+            accum = 0;
+            sprintf(partName, "%s.%03d", firstPart, i);
+            fp2 = fopen(partName, "r");
+            if(fp2){
+                while(fgets(line, 1080, fp2) && accum <= SEGMENT){
+                    accum += strlen(line);
+                    fputs(line, fp1);
+                }
+                fclose(fp2);
+                remove(partName);
+            }
+            else{
+                fclose(fp1);
+                return;
+            }
+        }
+        fclose(fp1);
+    }
 }
