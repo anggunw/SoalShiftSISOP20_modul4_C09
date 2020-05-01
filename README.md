@@ -1,9 +1,4 @@
 # SoalShiftSISOP20_modul4_C09
-* [Soal 1](#soal1)
-      
-* [Soal 2](#soal2)
-      
-* [Soal 3](#soal3)
 
 * [Soal 4](#soal4)
 
@@ -40,3 +35,9 @@ Perintah soal 4 adalah membentuk file "fs.log"di direktori home yang menyimpan d
 Di fungsi logFile, parameter command akan di compare dengan string "RMDIR" atau "UNLINK" dan jika memenuhi, maka variabel level akan menjadi "WARNING". Selain itu, variabel level akan menjadi "INFO". Informasi mengenai waktu system call dijalankan diambil dari localtime
 
 Kemudian, fungsi fopen dijalankan untuk melakukan pencatatan log ke file fs.log sesuai dengan informasi yang telah didapatkan
+
+Screenshot jawaban soal 4
+<p align="center">
+  <img src="https://imgur.com/HU7rT0I.png" width="350" title="1">
+</p>
+fuse dijalankan pada directory "nomor4", dan file fs.log berada di home directory  
